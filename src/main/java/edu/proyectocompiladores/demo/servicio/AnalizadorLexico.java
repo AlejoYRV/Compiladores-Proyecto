@@ -12,17 +12,18 @@ public class AnalizadorLexico {
     private ArrayList<simbolo> simbolos;
     private ArrayList<ErrorLexico> errores; // Cambiado de String a ErrorLexico
 
-    // Expresiones regulares mejoradas
-    private static final String PALABRA_RESERVADA = "\\b(Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena)\\b";
-    private static final String IDENTIFICADOR = "\\b(?!Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena)[a-zA-Z_][a-zA-Z0-9_]*\\b";
-    private static final String NUMERO = "-?\\d+(\\.\\d+)?"; // Soporta números enteros y decimales negativos
-    private static final String OPERADOR = "[+\\-*/=<>!&|]+";
-    private static final String SIMBOLO = "[{}();,]";
+    // Expresiones regulares mejoradas y ampliadas
+    private static final String PALABRA_RESERVADA = "\\b(Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena|Funcion|Retorno|Verdadero|Falso|Nulo)\\b";
+    private static final String IDENTIFICADOR = "\\b(?!Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena|Funcion|Retorno|Verdadero|Falso|Nulo)[a-zA-Z_][a-zA-Z0-9_]*\\b";
+    private static final String NUMERO = "-?\\d+(\\.\\d+)?(?:[eE][+-]?\\d+)?"; // Soporta números enteros, decimales y notación científica
+    private static final String HEXADECIMAL = "0[xX][0-9a-fA-F]+"; // Números hexadecimales
+    private static final String OPERADOR = "[+\\-/=<>!&|]+|\\+=|\\-=|\\=|/=|==|!=|>=|<=|&&|\\|\\|"; // Operadores simples y compuestos
+    private static final String SIMBOLO = "[{}();,\\[\\]:?]"; // Símbolos especiales, incluyendo corchetes y dos puntos
     private static final String CADENA = "\"[^\"]*\""; // Cadenas entre comillas dobles
-    private static final String COMENTARIO = "//.*|/\\*.*?\\*/"; 
+    private static final String COMENTARIO = "//.|/\\.?\\/"; // Comentarios de una línea y multilínea
 
     private static final Pattern TOKEN_PATTERN = Pattern.compile(
-            String.join("|", PALABRA_RESERVADA, IDENTIFICADOR, NUMERO, OPERADOR, SIMBOLO, CADENA));
+            String.join("|", PALABRA_RESERVADA, IDENTIFICADOR, NUMERO, HEXADECIMAL, OPERADOR, SIMBOLO, CADENA));
 
     public AnalizadorLexico() {
         tokens = new ArrayList<>();
@@ -77,6 +78,8 @@ public class AnalizadorLexico {
             return new Token("Identificador", tokenEncontrado);
         if (tokenEncontrado.matches(NUMERO)) 
             return new Token("Número", tokenEncontrado);
+        if (tokenEncontrado.matches(HEXADECIMAL)) 
+            return new Token("Hexadecimal", tokenEncontrado);
         if (tokenEncontrado.matches(OPERADOR)) 
             return new Token("Operador", tokenEncontrado);
         if (tokenEncontrado.matches(SIMBOLO)) 
@@ -90,7 +93,7 @@ public class AnalizadorLexico {
 
     private void detectarErrores(String fragmento, int linea) {
         for (char c : fragmento.toCharArray()) {
-            if (!Character.isWhitespace(c) && !Character.toString(c).matches("[a-zA-Z0-9_{}();,+\\-*/=<>!&|^#.\"]")) {
+            if (!Character.isWhitespace(c) && !Character.toString(c).matches("[a-zA-Z0-9_{}();,+\\-*/=<>!&|^#.\\[\\]:?\"]")) {
                 errores.add(new ErrorLexico(linea, "Carácter inválido '" + c + "'"));
             }
         }
