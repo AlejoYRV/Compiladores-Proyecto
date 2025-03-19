@@ -1,5 +1,7 @@
 package edu.proyectocompiladores.demo.modelo;
 
+
+//Nueva clase para manejar los errores de forma más completa
 public class ErrorLexico {
     private int linea;
     private String mensaje;
