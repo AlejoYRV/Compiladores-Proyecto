@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Analizador Léxico</h1>
+        </div>
+        <div class="main-panel">
+            <div class="code-panel">
+                <h2>Código Fuente</h2>
+                <textarea id="codigoFuente" class="code-area"></textarea>
+            </div>
+            <div class="button-panel">
+                <button id="analizarBtn" class="analyze-button">Analizar Código</button>
+            </div>
+            <div class="results-panel">
+                <div class="tabs">
+                    <button id="bttokens"class="tab-button active" onclick="openTab(event, 'tokens')">Tokens</button>
+                    <button id="btsimbolos"class="tab-button" onclick="openTab(event, 'tablaSimbolos')">Tabla de Símbolos</button>
+                    <button id="bterrores"class="tab-button" onclick="openTab(event, 'errores')">Errores Léxicos</button>
+                </div>
+                <div id="tokens" class="tab-content">
+                    <textarea id="tokensArea" class="result-area" readonly></textarea>
+                </div>
+                <div id="tablaSimbolos" class="tab-content">
+                    <textarea id="tablaSimbolosArea" class="result-area" readonly></textarea>
+                </div>
+                <div id="errores" class="tab-content">
+                    <textarea id="erroresArea" class="result-area" readonly></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
