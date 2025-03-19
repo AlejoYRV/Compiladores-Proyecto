@@ -5,13 +5,12 @@ public class simbolo {
     private String tipo;
     private String linea;
     private String columna;
-    
-    public simbolo(String nombre, String tipo, String linea, String columna){
-        this.nombre=nombre;
-        this.tipo=tipo;
-        this.linea=linea;
-        this.columna=columna;
 
+    public simbolo(String nombre, String tipo, String linea, String columna) {
+        this.nombre = nombre;
+        this.tipo = tipo;
+        this.linea = linea;
+        this.columna = columna;
     }
 
     public String getNombre() {
@@ -45,4 +44,19 @@ public class simbolo {
     public void setColumna(String columna) {
         this.columna = columna;
     }
+
+    @Override
+    public String toString() {
+        return "Simbolo{" +
+                "nombre='" + nombre + '\'' +
+                ", tipo='" + tipo + '\'' +
+                ", linea='" + linea + '\'' +
+                ", columna='" + columna + '\'' +
+                '}';
+    }
 }
+
+
+
+
+

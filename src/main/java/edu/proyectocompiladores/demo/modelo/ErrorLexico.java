@@ -1,16 +1,24 @@
 package edu.proyectocompiladores.demo.modelo;
 
+import java.io.Serializable;
 
-//Nueva clase para manejar los errores de forma más completa
-public class ErrorLexico {
+public class ErrorLexico implements Serializable {
     private int linea;
-    private String mensaje;
+    private int columna;
+    private String descripcion;
 
-    public ErrorLexico(int linea, String mensaje) {
+    // Constructor completo
+    public ErrorLexico(int linea, int columna, String descripcion) {
         this.linea = linea;
-        this.mensaje = mensaje;
+        this.columna = columna;
+        this.descripcion = descripcion;
     }
 
+    // Constructor vacío (para frameworks que lo requieran)
+    public ErrorLexico() {
+    }
+
+    // Getters y Setters
     public int getLinea() {
         return linea;
     }
@@ -19,12 +27,28 @@ public class ErrorLexico {
         this.linea = linea;
     }
 
-    public String getMensaje() {
-        return mensaje;
+    public int getColumna() {
+        return columna;
     }
 
-    public void setMensaje(String mensaje) {
-        this.mensaje = mensaje;
+    public void setColumna(int columna) {
+        this.columna = columna;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    // Representación en String
+    @Override
+    public String toString() {
+        return "Error en línea " + linea + ", columna " + columna + ": " + descripcion;
     }
 }
+
+
 
