@@ -9,7 +9,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AnalizadorLexico {
     private ArrayList<Token> tokens;
-    private ArrayList<String> errores;
+    private ArrayList<simbolo> simbolos;
+    private ArrayList<ErrorLexico> errores; // Cambiado de String a ErrorLexico
 
     // Expresiones regulares mejoradas
     private static final String PALABRA_RESERVADA = "\\b(Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena)\\b";
@@ -25,11 +26,13 @@ public class AnalizadorLexico {
 
     public AnalizadorLexico() {
         tokens = new ArrayList<>();
+        simbolos = new ArrayList<>();
         errores = new ArrayList<>();
     }
 
     public void analizarCodigo(String codigo) {
         tokens.clear();
+        simbolos.clear();
         errores.clear();
         ArrayList<String> identificadoresUnicos = new ArrayList<>();
 
@@ -38,30 +41,36 @@ public class AnalizadorLexico {
 
         Matcher matcher = TOKEN_PATTERN.matcher(codigo);
         int lastIndex = 0;
+        int linea = 1; 
+        int columna = 1; 
+
         while (matcher.find()) {
             // Detectar caracteres no reconocidos entre los tokens
             if (matcher.start() > lastIndex) {
-                detectarErrores(codigo.substring(lastIndex, matcher.start()));
+                detectarErrores(codigo.substring(lastIndex, matcher.start()), linea);
             }
 
             String tokenEncontrado = matcher.group();
-            Token token = clasificarToken(tokenEncontrado);
+            Token token = clasificarToken(tokenEncontrado, linea, columna);
             if (token != null) {
                 tokens.add(token);
                 if (token.getTipo().equals("Identificador") && !identificadoresUnicos.contains(token.getValor())) {
                     identificadoresUnicos.add(token.getValor());
+                    simbolos.add(new simbolo(token.getValor(), "Identificador", String.valueOf(linea), String.valueOf(columna)));
                 }
             }
+
             lastIndex = matcher.end();
+            columna = matcher.end() + 1;
         }
 
         // Revisar si quedaron caracteres no reconocidos al final
         if (lastIndex < codigo.length()) {
-            detectarErrores(codigo.substring(lastIndex));
+            detectarErrores(codigo.substring(lastIndex), linea);
         }
     }
 
-    private Token clasificarToken(String tokenEncontrado) {
+    private Token clasificarToken(String tokenEncontrado, int linea, int columna) {
         if (tokenEncontrado.matches(PALABRA_RESERVADA)) 
             return new Token("Palabra Reservada", tokenEncontrado);
         if (tokenEncontrado.matches(IDENTIFICADOR)) 
@@ -75,28 +84,20 @@ public class AnalizadorLexico {
         if (tokenEncontrado.matches(CADENA)) 
             return new Token("Cadena", tokenEncontrado);
 
-        errores.add("Error léxico: Token inválido '" + tokenEncontrado + "'");
+        errores.add(new ErrorLexico(linea, "Token inválido '" + tokenEncontrado + "'"));
         return null;
     }
 
-    private void detectarErrores(String fragmento) {
+    private void detectarErrores(String fragmento, int linea) {
         for (char c : fragmento.toCharArray()) {
             if (!Character.isWhitespace(c) && !Character.toString(c).matches("[a-zA-Z0-9_{}();,+\\-*/=<>!&|^#.\"]")) {
-                errores.add("Error léxico: Carácter inválido '" + c + "'");
+                errores.add(new ErrorLexico(linea, "Carácter inválido '" + c + "'"));
             }
         }
     }
 
-    public ArrayList<Token> getTokens() {
-        return tokens;
-    }
-
-    public ArrayList<String> getErrores() {
-        return errores;
-    }
-
     public ResultadoAnalisis resultadoAnalisis(String codigo){
         analizarCodigo(codigo);
-        return new ResultadoAnalisis(tokens);
+        return new ResultadoAnalisis(tokens, simbolos, errores);
     }      
 }
