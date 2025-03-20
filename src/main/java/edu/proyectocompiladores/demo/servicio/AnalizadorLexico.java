@@ -15,7 +15,7 @@ public class AnalizadorLexico {
     private ArrayList<ErrorLexico> errores;
     private HashMap<String, String> tiposIdentificadores; // Mapa para los tipos de variables
 
-    // Expresiones regulares corregidas
+    // Expresiones regulares
     private static final String COMENTARIO_UNA_LINEA = "//.*";
     private static final String COMENTARIO_MULTILINEA = "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/";
     private static final String PALABRA_RESERVADA = "\\b(Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena|Funcion|Retorno|Verdadero|Falso|Nulo)\\b";
@@ -27,7 +27,8 @@ public class AnalizadorLexico {
     private static final String CADENA = "\"[^\"]*\"";
 
     private static final Pattern TOKEN_PATTERN = Pattern.compile(
-            String.join("|", COMENTARIO_UNA_LINEA, COMENTARIO_MULTILINEA, PALABRA_RESERVADA, IDENTIFICADOR, NUMERO, HEXADECIMAL, OPERADOR, SIMBOLO, CADENA));
+            String.join("|", COMENTARIO_UNA_LINEA, COMENTARIO_MULTILINEA, PALABRA_RESERVADA, IDENTIFICADOR,
+                    NUMERO, HEXADECIMAL, OPERADOR, SIMBOLO, CADENA));
 
     public AnalizadorLexico() {
         tokens = new ArrayList<>();
@@ -44,55 +45,78 @@ public class AnalizadorLexico {
 
         Matcher matcher = TOKEN_PATTERN.matcher(codigo);
         int lastIndex = 0;
-        int linea = 1;
-        int columna = 1;
-        String ultimoTipo = null;  // Variable para almacenar el tipo de dato
+        String ultimoTipo = null;
 
         while (matcher.find()) {
-            // Detectar caracteres no reconocidos entre tokens
-            if (matcher.start() > lastIndex) {
-                detectarErrores(codigo.substring(lastIndex, matcher.start()), linea, columna);
+            int tokenStart = matcher.start();
+            // Procesa cualquier fragmento (entre tokens) en busca de errores
+            if (tokenStart > lastIndex) {
+                String fragmento = codigo.substring(lastIndex, tokenStart);
+                detectarErrores(fragmento, codigo, lastIndex);
             }
-
             String tokenEncontrado = matcher.group();
+            // Calcula la posición (línea y columna) usando el índice global
+            int[] pos = obtenerLineaColumna(codigo, tokenStart);
+            int linea = pos[0];
+            int columna = pos[1];
+
             Token token = clasificarToken(tokenEncontrado, linea, columna);
             if (token != null) {
                 tokens.add(token);
-                // Manejo de identificadores y tipos
+                // Si el token es un identificador y se detectó previamente un tipo de dato, se asocia
                 if (ultimoTipo != null && token.getTipo().equals("Identificador")) {
-                    // Si venimos de un tipo de variable, se almacena el tipo
                     tiposIdentificadores.put(token.getValor(), ultimoTipo);
-                    simbolos.add(new simbolo(token.getValor(), "Identificador", ultimoTipo, String.valueOf(linea), String.valueOf(columna)));
+                    simbolos.add(new simbolo(token.getValor(), "Identificador", ultimoTipo, 
+                            String.valueOf(linea), String.valueOf(columna)));
                     ultimoTipo = null;
                 } else if (token.getTipo().equals("Identificador")) {
-                    // Si ya existe, se marca como VARIABLE
                     String tipo = tiposIdentificadores.getOrDefault(token.getValor(), "VARIABLE");
-                    simbolos.add(new simbolo(token.getValor(), "Identificador", tipo, String.valueOf(linea), String.valueOf(columna)));
+                    simbolos.add(new simbolo(token.getValor(), "Identificador", tipo, 
+                            String.valueOf(linea), String.valueOf(columna)));
                 }
-
-                // Guardar tipo de variable encontrado
-                if (token.getTipo().equals("Palabra Reservada") && (
-                        token.getValor().equals("Entero") || token.getValor().equals("Real") ||
-                        token.getValor().equals("Cadena") || token.getValor().equals("Booleano"))) {
+                // Si el token es una palabra reservada que define tipo, se almacena para asociarlo al siguiente identificador
+                if (token.getTipo().equals("Palabra Reservada") &&
+                        (token.getValor().equals("Entero") || token.getValor().equals("Real") ||
+                         token.getValor().equals("Cadena") || token.getValor().equals("Booleano"))) {
                     ultimoTipo = token.getValor().toUpperCase();
                 }
             }
-
             lastIndex = matcher.end();
-            columna += tokenEncontrado.length();
-
-            // Ajustar líneas y columnas tomando en cuenta los saltos de línea del token encontrado
-            int saltos = contarSaltosDeLinea(tokenEncontrado);
-            linea += saltos;
-            if (tokenEncontrado.contains("\n")) {
-                int lastNewline = tokenEncontrado.lastIndexOf('\n');
-                columna = tokenEncontrado.length() - lastNewline;
-            }
         }
 
-        // Revisar si quedaron caracteres no reconocidos al final
+        // Procesa posibles errores al final del código
         if (lastIndex < codigo.length()) {
-            detectarErrores(codigo.substring(lastIndex), linea, columna);
+            String fragmento = codigo.substring(lastIndex);
+            detectarErrores(fragmento, codigo, lastIndex);
+        }
+    }
+
+    // Calcula la línea y columna basándose en la posición global en el código
+    private int[] obtenerLineaColumna(String codigo, int pos) {
+        int linea = 1;
+        int ultimaPos = -1;
+        for (int i = 0; i < pos; i++) {
+            if (codigo.charAt(i) == '\n') {
+                linea++;
+                ultimaPos = i;
+            }
+        }
+        int columna = pos - ultimaPos;
+        return new int[]{linea, columna};
+    }
+
+    // Detecta errores en un fragmento del código y calcula su posición global
+    private void detectarErrores(String fragmento, String codigo, int offset) {
+        for (int i = 0; i < fragmento.length(); i++) {
+            char c = fragmento.charAt(i);
+            int globalPos = offset + i;
+            int[] pos = obtenerLineaColumna(codigo, globalPos);
+            int linea = pos[0];
+            int columna = pos[1];
+            if (!Character.isWhitespace(c) &&
+                !String.valueOf(c).matches("[a-zA-Z0-9_{}();,+\\-*/=<>!&|^#.\\[\\]:?\"]")) {
+                errores.add(new ErrorLexico(linea, columna, "Carácter inválido '" + c + "'"));
+            }
         }
     }
 
@@ -124,39 +148,8 @@ public class AnalizadorLexico {
         if (tokenEncontrado.matches(CADENA)) {
             return new Token("Cadena", tokenEncontrado);
         }
-
-        // En caso de llegar aquí, se trata de un token inválido
-        errores.add(new ErrorLexico(linea, columna, "Carácter inválido '" + tokenEncontrado + "'"));
+        errores.add(new ErrorLexico(linea, columna, "Token inválido '" + tokenEncontrado + "'"));
         return null;
-    }
-
-    // Función para detectar errores en fragmentos no reconocidos,
-    // contando correctamente los saltos de línea y asignando la línea y columna correspondientes.
-    private void detectarErrores(String fragmento, int linea, int columna) {
-        int currentLine = linea;
-        int currentColumn = columna;
-        for (char c : fragmento.toCharArray()) {
-            if (c == '\n') {
-                currentLine++;
-                currentColumn = 1;
-            } else {
-                // Si el caracter no es un espacio u otro caracter permitido, se marca como error
-                if (!Character.isWhitespace(c) && !Character.toString(c).matches("[a-zA-Z0-9_{}();,+\\-*/=<>!&|^#.\\[\\]:?\"]")) {
-                    errores.add(new ErrorLexico(currentLine, currentColumn, "Carácter inválido '" + c + "'"));
-                }
-                currentColumn++;
-            }
-        }
-    }
-
-    private int contarSaltosDeLinea(String token) {
-        int count = 0;
-        for (char c : token.toCharArray()) {
-            if (c == '\n') {
-                count++;
-            }
-        }
-        return count;
     }
 
     public ResultadoAnalisis resultadoAnalisis(String codigo) {
