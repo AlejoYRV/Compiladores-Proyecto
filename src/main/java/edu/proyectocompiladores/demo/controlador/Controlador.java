@@ -11,6 +11,7 @@ public class Controlador {
     @Autowired
     private AnalizadorLexico analizadorLexico;//conexión entre backend y frontend
 
+    //Método para analizar código
     @PostMapping("/analizar")
     private ResultadoAnalisis analizarCodigo(@RequestBody String codigo)
     {

@@ -7,7 +7,7 @@ public class ErrorLexico implements Serializable {
     private int columna;
     private String descripcion;
 
-    // Constructor completo
+    // Constructor
     public ErrorLexico(int linea, int columna, String descripcion) {
         this.linea = linea;
         this.columna = columna;
@@ -43,7 +43,7 @@ public class ErrorLexico implements Serializable {
         this.descripcion = descripcion;
     }
 
-    // Representación en String
+    //Devuelve información sobre ErrorLéxico, en cadena
     @Override
     public String toString() {
         return "Error en línea " + linea + ", columna " + columna + ": " + descripcion;

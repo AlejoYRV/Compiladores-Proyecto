@@ -8,12 +8,14 @@ public class ResultadoAnalisis {
     private List<simbolo> simbolos;
     private List<ErrorLexico> errores; 
 
+    //Constructor
     public ResultadoAnalisis(List<Token> tokens, List<simbolo> simbolos, List<ErrorLexico> errores){
         this.tokens = tokens;
         this.simbolos = simbolos;
         this.errores = errores; 
     }
 
+    // Getters y Setters
     public List<Token> getTokens(){
         return this.tokens;
     }

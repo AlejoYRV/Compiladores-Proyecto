@@ -7,7 +7,7 @@ public class simbolo {
     private String linea;
     private String columna;
 
-    // Agregar constructor con cuatro parámetros
+    //Constructor con cuatro parámetros
     public simbolo(String nombre, String tipo01, String tipo02, String linea, String columna) {
         this.nombre = nombre;
         this.tipo01 = tipo01;
@@ -36,6 +36,7 @@ public class simbolo {
         return columna;
     }
 
+    //Devuelve una información sobre símbolo, en cadena
     @Override
     public String toString() {
         return "Simbolo{" +

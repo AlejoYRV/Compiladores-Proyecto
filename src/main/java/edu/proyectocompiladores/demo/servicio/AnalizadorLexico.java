@@ -10,12 +10,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AnalizadorLexico {
+    //Clases y atributos
     private ArrayList<Token> tokens;
     private List<simbolo> simbolos;
     private ArrayList<ErrorLexico> errores;
     private HashMap<String, String> tiposIdentificadores; // Mapa para los tipos de variables
 
-    // Expresiones regulares
+    // Expresiones regulares para la detección de tokens en el código fuente
     private static final String COMENTARIO_UNA_LINEA = "//.*";
     private static final String COMENTARIO_MULTILINEA = "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/";
     private static final String PALABRA_RESERVADA = "\\b(Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena|Funcion|Retorno|Verdadero|Falso|Nulo)\\b";
@@ -26,10 +27,13 @@ public class AnalizadorLexico {
     private static final String SIMBOLO = "[{}();,\\[\\]:?]";
     private static final String CADENA = "\"[^\"]*\"";
 
+    //Patrón de tokens usando las expresiones regulares
     private static final Pattern TOKEN_PATTERN = Pattern.compile(
             String.join("|", COMENTARIO_UNA_LINEA, COMENTARIO_MULTILINEA, PALABRA_RESERVADA, IDENTIFICADOR,
                     NUMERO, HEXADECIMAL, OPERADOR, SIMBOLO, CADENA));
 
+    
+    //Constructor
     public AnalizadorLexico() {
         tokens = new ArrayList<>();
         simbolos = new ArrayList<>();
@@ -37,17 +41,18 @@ public class AnalizadorLexico {
         tiposIdentificadores = new HashMap<>();
     }
 
+    //Analizar código; detecta errores, clasifica tokens, asocia identificadores
     public void analizarCodigo(String codigo) {
         tokens.clear();
         simbolos.clear();
         errores.clear();
         tiposIdentificadores.clear();
 
-        Matcher matcher = TOKEN_PATTERN.matcher(codigo);
+        Matcher matcher = TOKEN_PATTERN.matcher(codigo); //para buscar tokens
         int lastIndex = 0;
         String ultimoTipo = null;
 
-        while (matcher.find()) {
+        while (matcher.find()) { //itera sobre todos los tokens encontrados
             int tokenStart = matcher.start();
             // Procesa cualquier fragmento (entre tokens) en busca de errores
             if (tokenStart > lastIndex) {
@@ -60,7 +65,7 @@ public class AnalizadorLexico {
             int linea = pos[0];
             int columna = pos[1];
 
-            Token token = clasificarToken(tokenEncontrado, linea, columna);
+            Token token = clasificarToken(tokenEncontrado, linea, columna); //Clasifica token
             if (token != null) {
                 tokens.add(token);
                 // Si el token es un identificador y se detectó previamente un tipo de dato, se asocia
@@ -120,6 +125,7 @@ public class AnalizadorLexico {
         }
     }
 
+    //Clasifica un token según su tipo, si no coincide con ninguno, lo registra como error
     private Token clasificarToken(String tokenEncontrado, int linea, int columna) {
         if (tokenEncontrado.matches(COMENTARIO_UNA_LINEA)) {
             return new Token("Comentario", tokenEncontrado);
@@ -152,6 +158,7 @@ public class AnalizadorLexico {
         return null;
     }
 
+    //Devuelve el resultado del análisis; tokens, símbolos y errores encontrados
     public ResultadoAnalisis resultadoAnalisis(String codigo) {
         analizarCodigo(codigo);
         return new ResultadoAnalisis(tokens, simbolos, errores);

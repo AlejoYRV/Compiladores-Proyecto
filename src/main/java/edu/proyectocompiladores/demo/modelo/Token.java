@@ -11,6 +11,7 @@ public class Token {
     private String tipo;
     private String valor;
 
+    //Devuelve información sobre token, en cadena
     @Override
     public String toString() {
         return "Token{" + "tipo='" + tipo + '\'' + ", valor='" + valor + '\'' + '}';
