@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para mostrar Errores en el área de texto
     function mostrarErrores(errores) {
-        const erroresTexto = errores.map(error => `Línea ${error.linea}: ${error}`).join("\n");
+        const erroresTexto = errores.map(error => `Línea ${error.linea}: ${error.descripcion}`).join("\n");
         textareaErrores.value = erroresTexto;
     }
 

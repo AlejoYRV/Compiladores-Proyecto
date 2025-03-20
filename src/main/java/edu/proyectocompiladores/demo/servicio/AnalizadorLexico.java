@@ -46,7 +46,7 @@ public class AnalizadorLexico {
         int lastIndex = 0;
         int linea = 1;
         int columna = 1;
-        String ultimoTipo = null;  // 🔹 Variable para almacenar el tipo de dato
+        String ultimoTipo = null;  // Variable para almacenar el tipo de dato
 
         while (matcher.find()) {
             // Detectar caracteres no reconocidos entre tokens
@@ -74,17 +74,19 @@ public class AnalizadorLexico {
                 if (token.getTipo().equals("Palabra Reservada") && (
                         token.getValor().equals("Entero") || token.getValor().equals("Real") ||
                         token.getValor().equals("Cadena") || token.getValor().equals("Booleano"))) {
-                    ultimoTipo = token.getValor().toUpperCase();  // Guardamos el tipo en mayúsculas
+                    ultimoTipo = token.getValor().toUpperCase();
                 }
             }
 
             lastIndex = matcher.end();
             columna += tokenEncontrado.length();
 
-            // Ajustar líneas y columnas correctamente
-            linea += contarSaltosDeLinea(tokenEncontrado);
+            // Ajustar líneas y columnas tomando en cuenta los saltos de línea del token encontrado
+            int saltos = contarSaltosDeLinea(tokenEncontrado);
+            linea += saltos;
             if (tokenEncontrado.contains("\n")) {
-                columna = 1; // Reiniciar columna en nueva línea
+                int lastNewline = tokenEncontrado.lastIndexOf('\n');
+                columna = tokenEncontrado.length() - lastNewline;
             }
         }
 
@@ -123,14 +125,26 @@ public class AnalizadorLexico {
             return new Token("Cadena", tokenEncontrado);
         }
 
-        errores.add(new ErrorLexico(linea, columna, "Token inválido '" + tokenEncontrado + "'"));
+        // En caso de llegar aquí, se trata de un token inválido
+        errores.add(new ErrorLexico(linea, columna, "Carácter inválido '" + tokenEncontrado + "'"));
         return null;
     }
 
+    // Función actualizada para detectar errores en fragmentos no reconocidos,
+    // contando correctamente los saltos de línea y asignando la línea y columna correspondientes.
     private void detectarErrores(String fragmento, int linea, int columna) {
+        int currentLine = linea;
+        int currentColumn = columna;
         for (char c : fragmento.toCharArray()) {
-            if (!Character.isWhitespace(c) && !Character.toString(c).matches("[a-zA-Z0-9_{}();,+\\-*/=<>!&|^#.\\[\\]:?\"]")) {
-                errores.add(new ErrorLexico(linea, columna, "Carácter inválido '" + c + "'"));
+            if (c == '\n') {
+                currentLine++;
+                currentColumn = 1;
+            } else {
+                // Si el caracter no es un espacio u otro caracter permitido, se marca como error
+                if (!Character.isWhitespace(c) && !Character.toString(c).matches("[a-zA-Z0-9_{}();,+\\-*/=<>!&|^#.\\[\\]:?\"]")) {
+                    errores.add(new ErrorLexico(currentLine, currentColumn, "Carácter inválido '" + c + "'"));
+                }
+                currentColumn++;
             }
         }
     }
@@ -150,15 +164,3 @@ public class AnalizadorLexico {
         return new ResultadoAnalisis(tokens, simbolos, errores);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
