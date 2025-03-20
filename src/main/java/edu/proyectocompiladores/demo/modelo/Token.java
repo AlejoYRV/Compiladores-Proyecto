@@ -16,4 +16,3 @@ public class Token {
         return "Token{" + "tipo='" + tipo + '\'' + ", valor='" + valor + '\'' + '}';
     }
 }
-

@@ -1,6 +1,7 @@
 package edu.proyectocompiladores.demo.servicio;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,39 +13,40 @@ public class AnalizadorLexico {
     private ArrayList<Token> tokens;
     private List<simbolo> simbolos;
     private ArrayList<ErrorLexico> errores;
+    private HashMap<String, String> tiposIdentificadores; // Mapa para los tipos de variables
 
-    // Expresiones regulares mejoradas
+    // Expresiones regulares corregidas
+    private static final String COMENTARIO_UNA_LINEA = "//.*";
+    private static final String COMENTARIO_MULTILINEA = "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/";
     private static final String PALABRA_RESERVADA = "\\b(Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena|Funcion|Retorno|Verdadero|Falso|Nulo)\\b";
     private static final String IDENTIFICADOR = "\\b(?!Entero|Real|Cadena|Booleano|Si|Sino|Mientras|Para|EscribirLinea|Longitud|aCadena|Funcion|Retorno|Verdadero|Falso|Nulo)[a-zA-Z_][a-zA-Z0-9_]*\\b";
     private static final String NUMERO = "-?\\d+(\\.\\d+)?(?:[eE][+-]?\\d+)?";
     private static final String HEXADECIMAL = "0[xX][0-9a-fA-F]+";
-    private static final String OPERADOR = "[+\\-/=<>!&|]+|\\+=|\\-=|\\=|/=|==|!=|>=|<=|&&|\\|\\|";
+    private static final String OPERADOR = "(\\+\\+|--|==|!=|>=|<=|&&|\\|\\||[+\\-*/=<>!&|^#])";
     private static final String SIMBOLO = "[{}();,\\[\\]:?]";
     private static final String CADENA = "\"[^\"]*\"";
-    private static final String COMENTARIO = "//.*|/\\*.*?\\*/"; // Soporta comentarios multilínea
 
     private static final Pattern TOKEN_PATTERN = Pattern.compile(
-            String.join("|", PALABRA_RESERVADA, IDENTIFICADOR, NUMERO, HEXADECIMAL, OPERADOR, SIMBOLO, CADENA));
+            String.join("|", COMENTARIO_UNA_LINEA, COMENTARIO_MULTILINEA, PALABRA_RESERVADA, IDENTIFICADOR, NUMERO, HEXADECIMAL, OPERADOR, SIMBOLO, CADENA));
 
     public AnalizadorLexico() {
         tokens = new ArrayList<>();
         simbolos = new ArrayList<>();
         errores = new ArrayList<>();
+        tiposIdentificadores = new HashMap<>();
     }
 
     public void analizarCodigo(String codigo) {
         tokens.clear();
         simbolos.clear();
         errores.clear();
-        ArrayList<String> identificadoresUnicos = new ArrayList<>();
-
-        // Remover comentarios antes de analizar
-        codigo = codigo.replaceAll(COMENTARIO, "");
+        tiposIdentificadores.clear();
 
         Matcher matcher = TOKEN_PATTERN.matcher(codigo);
         int lastIndex = 0;
         int linea = 1;
         int columna = 1;
+        String ultimoTipo = null;  // 🔹 Variable para almacenar el tipo de dato
 
         while (matcher.find()) {
             // Detectar caracteres no reconocidos entre tokens
@@ -56,18 +58,34 @@ public class AnalizadorLexico {
             Token token = clasificarToken(tokenEncontrado, linea, columna);
             if (token != null) {
                 tokens.add(token);
-                if (token.getTipo().equals("Identificador") && !identificadoresUnicos.contains(token.getValor())) {
-                    identificadoresUnicos.add(token.getValor());
-                    simbolos.add(new simbolo(token.getValor(), "Identificador", String.valueOf(linea), String.valueOf(columna)));
+                // Manejo de identificadores y tipos
+                if (ultimoTipo != null && token.getTipo().equals("Identificador")) {
+                    // Si venimos de un tipo de variable, se almacena el tipo
+                    tiposIdentificadores.put(token.getValor(), ultimoTipo);
+                    simbolos.add(new simbolo(token.getValor(), "Identificador", ultimoTipo, String.valueOf(linea), String.valueOf(columna)));
+                    ultimoTipo = null;
+                } else if (token.getTipo().equals("Identificador")) {
+                    // Si ya existe, lo marcamos como VARIABLE
+                    String tipo = tiposIdentificadores.getOrDefault(token.getValor(), "VARIABLE");
+                    simbolos.add(new simbolo(token.getValor(), "Identificador", tipo, String.valueOf(linea), String.valueOf(columna)));
+                }
+
+                // Guardar tipo de variable encontrado
+                if (token.getTipo().equals("Palabra Reservada") && (
+                        token.getValor().equals("Entero") || token.getValor().equals("Real") ||
+                        token.getValor().equals("Cadena") || token.getValor().equals("Booleano"))) {
+                    ultimoTipo = token.getValor().toUpperCase();  // Guardamos el tipo en mayúsculas
                 }
             }
 
             lastIndex = matcher.end();
-            columna = matcher.end() + 1;
+            columna += tokenEncontrado.length();
 
             // Ajustar líneas y columnas correctamente
             linea += contarSaltosDeLinea(tokenEncontrado);
-            columna = calcularNuevaColumna(tokenEncontrado, columna);
+            if (tokenEncontrado.contains("\n")) {
+                columna = 1; // Reiniciar columna en nueva línea
+            }
         }
 
         // Revisar si quedaron caracteres no reconocidos al final
@@ -77,20 +95,33 @@ public class AnalizadorLexico {
     }
 
     private Token clasificarToken(String tokenEncontrado, int linea, int columna) {
-        if (tokenEncontrado.matches(PALABRA_RESERVADA))
+        if (tokenEncontrado.matches(COMENTARIO_UNA_LINEA)) {
+            return new Token("Comentario", tokenEncontrado);
+        }
+        if (tokenEncontrado.matches(COMENTARIO_MULTILINEA)) {
+            return new Token("Comentario", tokenEncontrado);
+        }
+        if (tokenEncontrado.matches(PALABRA_RESERVADA)) {
             return new Token("Palabra Reservada", tokenEncontrado);
-        if (tokenEncontrado.matches(IDENTIFICADOR))
+        }
+        if (tokenEncontrado.matches(IDENTIFICADOR)) {
             return new Token("Identificador", tokenEncontrado);
-        if (tokenEncontrado.matches(NUMERO))
+        }
+        if (tokenEncontrado.matches(NUMERO)) {
             return new Token("Número", tokenEncontrado);
-        if (tokenEncontrado.matches(HEXADECIMAL))
+        }
+        if (tokenEncontrado.matches(HEXADECIMAL)) {
             return new Token("Hexadecimal", tokenEncontrado);
-        if (tokenEncontrado.matches(OPERADOR))
+        }
+        if (tokenEncontrado.matches(OPERADOR)) {
             return new Token("Operador", tokenEncontrado);
-        if (tokenEncontrado.matches(SIMBOLO))
-            return new Token("Símbolo Especial", tokenEncontrado);
-        if (tokenEncontrado.matches(CADENA))
+        }
+        if (tokenEncontrado.matches(SIMBOLO)) {
+            return new Token("Signo", tokenEncontrado);
+        }
+        if (tokenEncontrado.matches(CADENA)) {
             return new Token("Cadena", tokenEncontrado);
+        }
 
         errores.add(new ErrorLexico(linea, columna, "Token inválido '" + tokenEncontrado + "'"));
         return null;
@@ -114,16 +145,16 @@ public class AnalizadorLexico {
         return count;
     }
 
-    private int calcularNuevaColumna(String token, int columnaActual) {
-        int lastNewline = token.lastIndexOf('\n');
-        return (lastNewline == -1) ? columnaActual + token.length() : token.length() - lastNewline;
-    }
-
     public ResultadoAnalisis resultadoAnalisis(String codigo) {
         analizarCodigo(codigo);
         return new ResultadoAnalisis(tokens, simbolos, errores);
     }
 }
+
+
+
+
+
 
 
 

@@ -12,7 +12,8 @@ public class Controlador {
     private AnalizadorLexico analizadorLexico;//conexión entre backend y frontend
 
     @PostMapping("/analizar")
-    private ResultadoAnalisis analizarCodigo(@RequestBody String codigo){
+    private ResultadoAnalisis analizarCodigo(@RequestBody String codigo)
+    {
         return analizadorLexico.resultadoAnalisis(codigo);
     }
 }
