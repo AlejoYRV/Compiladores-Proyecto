@@ -65,7 +65,7 @@ public class AnalizadorLexico {
                     simbolos.add(new simbolo(token.getValor(), "Identificador", ultimoTipo, String.valueOf(linea), String.valueOf(columna)));
                     ultimoTipo = null;
                 } else if (token.getTipo().equals("Identificador")) {
-                    // Si ya existe, lo marcamos como VARIABLE
+                    // Si ya existe, se marca como VARIABLE
                     String tipo = tiposIdentificadores.getOrDefault(token.getValor(), "VARIABLE");
                     simbolos.add(new simbolo(token.getValor(), "Identificador", tipo, String.valueOf(linea), String.valueOf(columna)));
                 }
@@ -130,7 +130,7 @@ public class AnalizadorLexico {
         return null;
     }
 
-    // Función actualizada para detectar errores en fragmentos no reconocidos,
+    // Función para detectar errores en fragmentos no reconocidos,
     // contando correctamente los saltos de línea y asignando la línea y columna correspondientes.
     private void detectarErrores(String fragmento, int linea, int columna) {
         int currentLine = linea;

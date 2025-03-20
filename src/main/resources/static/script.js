@@ -84,14 +84,25 @@ document.addEventListener('DOMContentLoaded', () => {
         textareaTokens.value = tokensTexto;
     }
 
-    // Función para mostrar Tabla de Símbolos en el área de texto
+    // Función para mostrar la Tabla de Símbolos en el área de texto (formato personalizado)
     function mostrarSimbolos(simbolos) {
-        const simbolosTexto = simbolos.map(simbolo => `${simbolo.nombre}: ${simbolo.tipo} (Línea ${simbolo.linea}, Columna ${simbolo.columna})`).join("\n");
+        let contador = 1;
+        // Construimos el texto para cada símbolo
+        const simbolosTexto = simbolos.map(sim => {
+            // Índice con dos dígitos (01, 02, 03, ...)
+            const indice = String(contador++).padStart(2, '0');
+            // Formato: "03 / contador / Identificador / ENTERO / Línea: 2 / Columna: 7"
+            return `${indice} / ${sim.nombre} / ${sim.tipo01} / ${sim.tipo02} / Línea: ${sim.linea} / Columna: ${sim.columna}`;
+        }).join("\n");
+
         textareaSimbolos.value = simbolosTexto;
     }
 
-    // Función para mostrar Errores en el área de texto
+    // Función para mostrar Errores en el área de texto (ordenados por línea)
     function mostrarErrores(errores) {
+        // Ordenamos los errores por número de línea
+        errores.sort((a, b) => a.linea - b.linea);
+        // Construimos el texto
         const erroresTexto = errores.map(error => `Línea ${error.linea}: ${error.descripcion}`).join("\n");
         textareaErrores.value = erroresTexto;
     }
