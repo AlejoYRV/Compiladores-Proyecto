@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const textareaSimbolos = document.getElementById("tablaSimbolosArea");
     const textareaErrores = document.getElementById("erroresArea");
 
+    const btnEvaluador = document.getElementById("bEvaluador");
+    const textareaEvaluador = document.getElementById("evaluador-output");
+
+
     let resultadoAnalisis = null;
     
     // Evento para compilar y analizar el código
@@ -77,6 +81,21 @@ document.addEventListener('DOMContentLoaded', () => {
             openTab(event, "errores");
         }
     });
+
+    // Evento para mostrar Evaluador
+    btnEvaluador.addEventListener("click", (event) => {
+        openTab(event, "evaluador"); // Cambiar de pestaña
+
+        const codigo = document.getElementById("codigoFuente").value;
+        const lineas = codigo.split('\n');
+
+        const evaluador = new Evaluador();
+        evaluador.evaluarAsignaciones(lineas);
+
+        // Mostrar resultados o errores
+        textareaEvaluador.value = evaluador.generarSalida();
+    });
+
 
     // Función para mostrar Tokens en el área de texto
     function mostrarTokens(tokens) {
