@@ -7,6 +7,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import edu.proyectocompiladores.demo.modelo.*;
 import org.springframework.stereotype.Service;
+import java.util.Map;
+
+import edu.proyectocompiladores.demo.parser.AlgebraGrupo8Lexer;
+import edu.proyectocompiladores.demo.parser.AlgebraGrupo8Parser;
+import edu.proyectocompiladores.demo.servicio.*;
+import edu.proyectocompiladores.demo.modelo.Token;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 @Service
 public class AnalizadorLexico {
@@ -162,5 +170,31 @@ public class AnalizadorLexico {
     public ResultadoAnalisis resultadoAnalisis(String codigo) {
         analizarCodigo(codigo);
         return new ResultadoAnalisis(tokens, simbolos, errores);
+    }
+
+    public Map<String, Double> evaluarExpresion(String input){
+        CharStream inputStream = CharStreams.fromString(input);
+        AlgebraGrupo8Lexer lexer = new AlgebraGrupo8Lexer(inputStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        AlgebraGrupo8Parser parser = new AlgebraGrupo8Parser(tokens);
+
+        //Configuracion para mejorar mensajes
+        parser.removeErrorListeners();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                    int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new RuntimeException("Error de sintaxis en línea " + line + ":" + charPositionInLine + " → " + msg);
+            }
+        });
+        
+        //Ejecutar parser con regla inicial
+        ParseTree arbolSintactico = parser.program();
+
+        //Evaluar Expresión
+        Evaluador visitor = new Evaluador();
+        visitor.visit(arbolSintactico);
+
+        return visitor.getVariables();
     }
 }
