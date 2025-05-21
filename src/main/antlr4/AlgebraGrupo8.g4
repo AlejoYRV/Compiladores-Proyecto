@@ -1,6 +1,6 @@
 grammar AlgebraGrupo8;
 
-// Parser rules
+// Parser
 program: (statement ';'?)* EOF;
 
 statement: assignment | expression;
@@ -17,7 +17,7 @@ expression
     | ID                                      # idExpression
     ;
 
-// Lexer rules
+// Lexer
 ID: [a-zA-Z_@][a-zA-Z0-9_@]*;
 NUMBER: [0-9]+ ('.' [0-9]+)?;
 

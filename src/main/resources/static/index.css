@@ -70,6 +70,29 @@ body {
     background-color: #229954;
 }
 
+/* Botón coral, texto blanco y sin subrayado */
+.Arbol {
+  display: inline-block; 
+  margin-top: 20px;    
+  margin-left: 20px;     
+  text-decoration: none;          
+  font-family: 'Serif', serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: #FFFFFF;                 
+  background-color: #C86B50;      
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color .2s;
+}
+
+.Arbol:hover {
+  background-color: #FF6A3D;    
+}
+
+
 /* === Panel de Resultados unificado === */
 .results-section {
     background-color: #FFFFFF;
